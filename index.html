@@ -1,0 +1,51 @@
+<html>
+
+<head>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=VT323&display=swap" rel="stylesheet">
+	<style>
+		html,
+		body {
+			background-color: #f2f2f2;
+			background-color: black;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+		}
+
+		#canvas {
+			border: 1px solid red;
+			margin-bottom: 10px;
+		}
+
+		#otherCanvas {
+			border: 1px solid red;
+		}
+
+		#title {
+			font-size: 4em;
+			text-align: center;
+			font-family: 'Permanent Marker', cursive;
+			color: red;
+		}
+	</style>
+
+</head>
+
+
+<body>
+	<h1 id="title"> Etch-A-Sketch </h1>
+
+
+	<canvas id="canvas" width="500" height="500"></canvas>
+
+	<canvas id="otherCanvas" width="200" height="200"></canvas>
+
+	<script src="script.js" type="module"></script>
+</body>
+
+
+
+</html>

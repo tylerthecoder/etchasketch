@@ -1,5 +1,3 @@
-import { io } from "https://cdn.socket.io/4.4.1/socket.io.esm.min.js";
-
 class Canvas {
 	#e;
 	#ctx;
@@ -21,7 +19,8 @@ class Canvas {
 		return this.#e.height;
 	}
 
-	drawCircle(x, y, r, color) {
+	drawCircle(x, y, color) {
+		const r = this.#e.width / 32;
 		this.#ctx.beginPath();
 		this.#ctx.arc(x, y, r, 0, 2 * Math.PI);
 		this.#ctx.fillStyle = color;
@@ -30,23 +29,46 @@ class Canvas {
 	}
 
 	getBlob() {
-		return this.#e.toDataURL();
+		return new Promise(resolve => {
+			this.#e.toBlob(blob => resolve(blob), "image/jpeg");
+		});
+	}
+
+	showObjectPrompt(word) {
+		document.getElementById("subtitle").innerHTML = `Draw a ${word}!`;
 	}
 }
 
 class API {
 	#socket;
+
+	onMove;
+	onStart;
+
 	constructor() {
-		this.socket = io(location.hostname + ":3000");
+		this.#socket = new WebSocket("ws://" + location.host + "/ws")
+
+		this.#socket.addEventListener("open", () => {
+			console.log("Socket Opened")
+		});
+
+		this.#socket.addEventListener("message", (e) => {
+			const data = JSON.parse(e.data);
+			if (data.type === "move") {
+				this.onMove(data.data);
+			} else if (data.type === "startGame") {
+				this.onStart(data.data);
+			}
+		});
 	}
 
 	sendDot(data) {
-		this.socket.emit("move", data);
+		this.#socket.send(JSON.stringify({
+			type: "move",
+			data
+		}));
 	}
 
-	onData(func) {
-		this.socket.on("move", func);
-	}
 }
 
 class GameController {
@@ -60,14 +82,13 @@ class GameController {
 		});
 		canvas.addEventListener("mouseup", () => game.drawing = false);
 
-		this.window.addEventListener("keydown", (e) => {
+		window.addEventListener("keydown", (e) => {
 			if (e.key === "s") {
-				this.game.save();
+				game.save();
 			}
 		});
 
 		canvas.addEventListener("touchstart", () => game.drawing = true);
-
 	}
 }
 
@@ -82,11 +103,19 @@ class Game {
 	drawing = false;
 
 	constructor() {
-		api.onData((data) => {
-			otherCanvas.drawCircle(data.x / (500 / 200), data.y / (500 / 200), 1, 'blue');
-		});
+		api.onMove = data => {
+			otherCanvas.drawCircle(data.x / (500 / 200), data.y / (500 / 200), 'blue');
+		};
+
+		api.onStart = data => {
+			this.start(data);
+		};
 
 		requestAnimationFrame(this.update.bind(this));
+	}
+
+	start(data) {
+		canvas.showObjectPrompt(data.word);
 	}
 
 	move() {
@@ -114,14 +143,19 @@ class Game {
 	}
 
 	draw() {
-		canvas.drawCircle(this.x, this.y, 1, 'red');
+		canvas.drawCircle(this.x, this.y, 'red');
 	}
 
-	save() {
-		const blob = canvas.getBlob();
-
-
-
+	async save() {
+		const blob = await canvas.getBlob();
+		const file = new File([blob], "file.jpg", { type: "image/jpeg" });
+		console.log(file)
+		const form = new FormData()
+		form.append('file', blob)
+		await fetch('/upload', {
+			method: 'POST',
+			body: form
+		})
 	}
 }
 

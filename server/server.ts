@@ -1,68 +1,38 @@
-// Create a server that listens on port 3000
-import { Server } from "socket.io";
-import { createServer } from "http";
-import express from "express";
-import cors from "cors";
-import multer from "multer";
+import { Game } from "./game.ts"
+import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 
-const upload = multer({ dest: '/tmp/' });
+const app = new Application();
+const games = new Game();
+const router = new Router();
 
-const httpServer = createServer();
-const io = new Server(httpServer, {
-	// options
-	cors: {
-		origin: "*",
-	}
-});
-
-let player1;
-let player2;
-
-io.on("connection", (socket) => {
-
-	if (!player1) {
-		player1 = socket;
-		console.log("Player 1 Connection");
-	} else if (!player2) {
-		player2 = socket;
-		console.log("Player 2 Connection");
-	} else {
-		console.log("Too many players");
-	}
-
-	socket.on("disconnect", async () => {
-		if (socket === player1) {
-			player1 = null;
-			console.log("Player 1 Disconnected");
-		} else if (socket === player2) {
-			player2 = null;
-			console.log("Player 2 Disconnected");
+router
+	.get("/ws", async (ctx) => {
+		console.log("WS connection");
+		const socket = await ctx.upgrade();
+		socket.onopen = () => {
+			console.log("socket opened");
+			games.addPlayer(socket);
 		}
-	});
+	})
+	.post(
+		'/upload',
+		async (ctx) => {
+			const body = await ctx.request.body({ type: 'form-data' })
+			const data = await body.value.read()
+			console.log(data)
+		})
 
+app.use(router.routes());
+app.use(router.allowedMethods());
 
-	socket.on("move", (data) => {
-		if (socket === player1) {
-			player2?.emit("move", data);
-		} else if (socket === player2) {
-			player1?.emit("move", data);
-		}
+// Send static content
+app.use(async (context) => {
+	await context.send({
+		root: `${Deno.cwd()}/web`,
+		index: "index.html",
 	});
 });
 
-
-io.on("draw", () => {
-
+await app.listen({
+	port: 3000
 })
-
-httpServer.listen(3000);
-pp = express();
-app.use(cors())
-app.use(express.urlencoded({ extended: true }))
-app.use(express.json())
-app.post('/', upload.any(), (req, res) => {
-	res.send(req.files);
-});
-app.listen(3000, () => console.log('Servering Started !'));
-
-

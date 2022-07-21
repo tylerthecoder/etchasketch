@@ -1,6 +1,7 @@
 import { Game } from "./game.ts"
 import { Application, Router } from "https://deno.land/x/oak@v10.6.0/mod.ts";
 
+const port = 3000;
 const app = new Application();
 const games = new Game();
 const router = new Router();
@@ -17,7 +18,7 @@ router
 	.post(
 		'/upload',
 		async (ctx) => {
-			const body = await ctx.request.body({ type: 'form-data' })
+			const body = ctx.request.body({ type: 'form-data' })
 			const data = await body.value.read()
 			console.log(data)
 		})
@@ -33,6 +34,7 @@ app.use(async (context) => {
 	});
 });
 
-await app.listen({
-	port: 3000
-})
+console.log("Running on port " + port);
+
+await app.listen({ port })
+

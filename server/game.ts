@@ -1,6 +1,6 @@
 import { SocketMessageType, SocketMessage } from "./types.ts"
 
-const possibleObjects = (await Deno.readTextFile("./server/class_names.txt")).split("\n");
+const possibleObjects = (await Deno.readTextFile("./assets/class_names.txt")).split("\n");
 
 
 export class Game {

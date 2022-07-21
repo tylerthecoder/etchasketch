@@ -20,15 +20,15 @@ def drawing_classifier(img_path):
         img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
 
         # getting list of class names from text file
-        with open('./class_names.txt', 'r') as f:
+        with open('../assets/class_names.txt', 'r') as f:
                 classes = f.readlines()
-                
+
         classes = np.array(classes)
 
         model = resnet34(numclasses=345, pretrained=False)
         model.load_state_dict(torch.load('./models/model_75_2.pt', map_location=torch.device('cpu')), strict=True)
         model.eval()
-        
+
         with torch.no_grad():
                 # img = cv2.bitwise_not(img)
                 img = cv2.resize(img, (28, 28), interpolation=cv2.INTER_AREA)
@@ -38,7 +38,7 @@ def drawing_classifier(img_path):
 
                 img = img/255
                 out_data = model(img)
-                
+
                 img = np.array(img[0][0][:][:])
 
                 # cv2.imshow('img', img)
@@ -57,17 +57,17 @@ def drawing_classifier(img_path):
                 certainty = out_data.topk(3, 1)[0]
 
                 # print(certainty.flatten().tolist())
-                print(torch.argmax(out_data)) 
+                print(torch.argmax(out_data))
 
-        return pred, certainty 
+        return pred, certainty
 
 if __name__ == '__main__':
         # path = './images/golf_club.png'
         path = './images/face.jpg'
-        
+
         # cv2.imshow('img', cv2.imread(path))
         # cv2.waitKey(0)
-        
+
         pred, certainty = drawing_classifier(path)
         print(pred, certainty)
         # for path in os.listdir('./images'):
